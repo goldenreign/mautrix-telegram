@@ -693,10 +693,12 @@ class PortalMetadata(BasePortal, ABC):
         if self.username:
             await self.main_intent.remove_room_alias(self.alias_localpart)
         self.username = username or None
+
         if self.username:
             await self.main_intent.add_room_alias(self.mxid, self.alias_localpart, override=True)
-            if self.public_portals:
-                await self.main_intent.set_join_rule(self.mxid, "public")
+
+        if self.username and self.public_portals:
+            await self.main_intent.set_join_rule(self.mxid, "public")
         else:
             await self.main_intent.set_join_rule(self.mxid, "invite")
 
