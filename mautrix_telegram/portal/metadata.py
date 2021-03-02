@@ -265,6 +265,16 @@ class PortalMetadata(BasePortal, ABC):
         return f"net.maunium.telegram://telegram/{self.tgid}"
 
     @property
+    def join_rule_value(self) -> str:
+        return "public" if self.username and self.public_portals else "invite"
+
+    @property
+    def join_rule(self) -> Dict[str, Any]:
+        return {
+            "join_rule": self.join_rule_value
+        }
+
+    @property
     def bridge_info(self) -> Dict[str, Any]:
         info = {
             "bridgebot": self.az.bot_mxid,
@@ -366,6 +376,9 @@ class PortalMetadata(BasePortal, ABC):
             self.title = puppet.displayname
 
         initial_state = [{
+            "type": EventType.ROOM_JOIN_RULES.serialize(),
+            "content": self.join_rule,
+        }, {
             "type": EventType.ROOM_POWER_LEVELS.serialize(),
             "content": power_levels.serialize(),
         }, {
@@ -697,10 +710,7 @@ class PortalMetadata(BasePortal, ABC):
         if self.username:
             await self.main_intent.add_room_alias(self.mxid, self.alias_localpart, override=True)
 
-        if self.username and self.public_portals:
-            await self.main_intent.set_join_rule(self.mxid, "public")
-        else:
-            await self.main_intent.set_join_rule(self.mxid, "invite")
+        await self.main_intent.set_join_rule(self.mxid, self.join_rule_value)
 
         if save:
             await self.save()
